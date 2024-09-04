@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@cypress/instrument-cra": "^1.4.0",
+    "cypress": "^13.10.0"
+  },
+  "devDependencies": {
+    "@cypress/code-coverage": "^3.12.13"
+  }
+}
