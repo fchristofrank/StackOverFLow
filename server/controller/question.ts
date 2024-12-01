@@ -5,8 +5,11 @@ import {
   FindQuestionRequest,
   FindQuestionByIdRequest,
   AddQuestionRequest,
+  VoteRequestBody,
 } from '../types';
 import {
+  addDownvoteToQuestion,
+  addUpvoteToQuestion,
   fetchAndIncrementQuestionViewsById,
   filterQuestionsBySearch,
   getQuestionsByOrder,
@@ -124,9 +127,43 @@ const addQuestion = async (req: AddQuestionRequest, res: Response): Promise<void
   }
 };
 
+const upVoteToQuestion = async (req: VoteRequestBody, res: Response): Promise<void> => {
+
+  const { questionID, username }: { questionID: string; username: string } = req.body;
+
+  try {
+    await addUpvoteToQuestion(questionID, username);
+    res.status(200).send("Updated");
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      res.status(500).send(`Error when saving question: ${err.message}`);
+    } else {
+      res.status(500).send(`Error when saving question`);
+    }
+  }
+};
+
+const downvoteToQuestion = async (req: VoteRequestBody, res: Response): Promise<void> => {
+
+  const { questionID, username }: { questionID: string; username: string } = req.body;
+
+  try {
+    await addDownvoteToQuestion(questionID, username);
+    res.status(200).send("Updated");
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      res.status(500).send(`Error when saving question: ${err.message}`);
+    } else {
+      res.status(500).send(`Error when saving question`);
+    }
+  }
+};
+
 // add appropriate HTTP verbs and their endpoints to the router
 router.get('/getQuestion', getQuestionsByFilter);
 router.get('/getQuestionById/:qid', getQuestionById);
 router.post('/addQuestion', addQuestion);
+router.post('/upvoteQuestion', upVoteToQuestion);
+router.post('/downvoteQuestion', downvoteToQuestion);
 
 export default router;

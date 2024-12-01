@@ -45,6 +45,7 @@ export type AnswerResponse = Answer | { error: string };
 export interface Tag {
   _id?: ObjectId;
   name: string;
+  description?: string;
 }
 
 /**
@@ -68,6 +69,13 @@ export interface Question {
   ask_date_time: Date;
   answers: Answer[];
   views: number;
+  up_votes: string[];
+  down_votes: string[];
+}
+
+export interface VoteRequest {
+  questionID: string;
+  username: string;
 }
 
 /**
@@ -102,4 +110,8 @@ export interface FindQuestionByIdRequest extends Request {
  */
 export interface AddQuestionRequest extends Request {
   body: Question;
+}
+
+export interface VoteRequestBody extends Request {
+  body: VoteRequest;
 }

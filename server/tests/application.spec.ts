@@ -73,6 +73,8 @@ const QUESTIONS: Question[] = [
     asked_by: 'q_by1',
     ask_date_time: new Date('2023-11-16T09:24:00'),
     views: 48,
+    up_votes : [],
+    down_votes : []
   },
   {
     _id: new ObjectId('65e9b5a995b6c7045a30d823'),
@@ -83,6 +85,8 @@ const QUESTIONS: Question[] = [
     asked_by: 'q_by2',
     ask_date_time: new Date('2023-11-17T09:24:00'),
     views: 34,
+    up_votes : [],
+    down_votes : []
   },
   {
     _id: new ObjectId('65e9b9b44c052f0a08ecade0'),
@@ -93,6 +97,8 @@ const QUESTIONS: Question[] = [
     asked_by: 'q_by3',
     ask_date_time: new Date('2023-11-19T09:24:00'),
     views: 12,
+    up_votes : [],
+    down_votes : []
   },
   {
     _id: new ObjectId('65e9b716ff0e892116b2de09'),
@@ -103,6 +109,8 @@ const QUESTIONS: Question[] = [
     asked_by: 'q_by4',
     ask_date_time: new Date('2023-11-20T09:24:00'),
     views: 233,
+    up_votes : [],
+    down_votes : []
   },
 ];
 
@@ -222,6 +230,9 @@ describe('application module', () => {
     expect(result[1]._id?.toString()).toEqual('65e9b58910afe6e94fc6e6dc');
     expect(result[2]._id?.toString()).toEqual('65e9b9b44c052f0a08ecade0');
   });
+
+  //added test to check the order by views
+
 
   test('get active questions, newest questions sorted by most recently answered 2', async () => {
     const allQuestions = [
@@ -413,6 +424,8 @@ describe('application module', () => {
       ask_date_time: new Date('2024-06-06'),
       answers: [],
       views: 0,
+      up_votes : [],
+      down_votes : []
     };
 
     const result = (await saveQuestion(mockQn)) as Question;

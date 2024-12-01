@@ -4,6 +4,7 @@ import { Answer, AnswerResponse, OrderType, Question, QuestionResponse, Tag } fr
 import AnswerModel from './answers';
 import QuestionModel from './questions';
 import TagModel from './tags';
+import { error } from 'console';
 
 /**
  * Parses tags from a search string.
@@ -104,6 +105,8 @@ export const getMostRecentAnswerTime = (q: Question, mp: Map<string, Date>): voi
   });
 };
 
+
+
 /**
  * Gets active questions from a list, sorted by the most recent answer date in descending order.
  *
@@ -135,6 +138,11 @@ export const sortQuestionsByActive = (qlist: Question[]): Question[] => {
   });
 };
 
+
+export const sortQuestionsByMostViewed = (qlist: Question[]): Question[] => {
+  return [...qlist].sort((a, b) => b.views - a.views);
+};
+ 
 /**
  * Adds a tag to the database if it does not already exist.
  *
@@ -145,9 +153,15 @@ export const addTag = async (tag: Tag): Promise<Tag | null> => {
   try {
     // Check if a tag with the given name already exists
     const existingTag = await TagModel.findOne({ name: tag.name });
+    console.log("current")
+    console.log(existingTag);
 
     if (existingTag) {
       return existingTag as Tag;
+    }
+
+    if (existingTag == null){
+      return new Error("No Element Found")
     }
 
     // If the tag does not exist, create a new one
@@ -156,7 +170,7 @@ export const addTag = async (tag: Tag): Promise<Tag | null> => {
 
     return savedTag as Tag;
   } catch (error) {
-    return null;
+    return new Error("Error Occurred");
   }
 };
 
@@ -182,6 +196,10 @@ export const getQuestionsByOrder = async (order: OrderType): Promise<Question[]>
 
     if (order === 'unanswered') {
       return sortQuestionsByUnanswered(qlist);
+    }
+
+    if (order === 'mostViewed'){
+      return sortQuestionsByMostViewed(qlist);
     }
 
     return sortQuestionsByNewest(qlist);
@@ -288,21 +306,24 @@ export const saveAnswer = async (a: Answer): Promise<AnswerResponse> => {
  * @returns {Promise<Tag[]>} - The list of tags, or an empty array if an error occurred
  */
 export const getTags = async (tags: Tag[]): Promise<Tag[]> => {
-  try {
-    return await Promise.all(
-      tags.map(async tag => {
-        const addedTag = await addTag(tag);
+  
+    /*Remove duplicate tags, ensuring that if the incoming array of tag objects contains
+     objects with the same name, only the first tag object is used and others 
+     are discarded.*/
+    const seenNames = new Set<string>();
+    const uniqueTags = tags.filter(tag => {
+      if (seenNames.has(tag.name)) {
+        return false;
+      }
+      seenNames.add(tag.name);
+      return true;
+    });
 
-        if (addedTag) {
-          return addedTag;
-        }
-
-        throw new Error('Error while adding tag');
-      }),
+    const resultTags = await Promise.all(
+      uniqueTags.map(tag => addTag(tag))
     );
-  } catch (error) {
-    return [];
-  }
+
+    return resultTags.filter((tag): tag is Tag => tag !== null);
 };
 
 /**
@@ -314,11 +335,54 @@ export const getTags = async (tags: Tag[]): Promise<Tag[]> => {
  */
 
 export const addUpvoteToQuestion = async (qid: string, username: string) => {
-  // TODO: Implement function
+  try {
+    const result = await QuestionModel.findOneAndUpdate(
+      { _id: qid, up_votes: { $ne: username } },
+      { $push: { up_votes: username } },
+      { new: true }
+    );
+
+    if (null != result && `error` in result){
+      throw result;
+    }
+
+    if (!result) {
+      throw new Error('Database error');
+    }
+
+
+    return {
+      msg: 'Question upvoted successfully',
+      up_votes: result.up_votes,
+      down_votes: result.down_votes,
+    };
+  } catch (error) {
+    return {"error": "Error when adding upvote to question" }
+  }
 };
 
+
 export const addDownvoteToQuestion = async (qid: string, username: string) => {
-  // TODO: Implement function
+  try {
+    const result = await QuestionModel.findOneAndUpdate(
+      { _id: qid, down_votes: { $ne: username } },
+      { $push: { down_votes: username } },
+      { new: true }
+    );
+
+    if (!result) {
+      throw new Error('Database error');
+    }
+
+    // Return the formatted response
+    return {
+      msg: 'Question downvoted successfully',
+      up_votes: result.up_votes,
+      down_votes: result.down_votes,
+    };
+  } catch (error) {
+    return {"error": "Error when adding downvote to question" }
+  }
 };
 
 /**

@@ -1,5 +1,7 @@
-import express, { Request, Response, Router } from 'express';
-import { getTagCountMap } from '../models/application';
+import express, { Request, Response, Router } from 'express'
+import { getTagCountMap, getTags } from '../models/application';
+import { Tag } from '../types';
+import TagModel from '../models/tags';
 
 const router: Router = express.Router();
 
@@ -29,7 +31,38 @@ const getTagsWithQuestionNumber = async (_: Request, res: Response): Promise<voi
   }
 };
 
+const getTagByName = async (req: Request, res: Response): Promise<void> => {
+  const tagName = req.params.tagName;
+
+  if (!tagName) {
+    res.status(400).send('Tag name is required');
+    return;
+  }
+
+  try {
+    const tags: Tag[] = [{ name: tagName, description: "" }];
+    const result = await getTags(tags);
+
+    if (result[0] instanceof Error) throw result[0];
+    if (result[0].name.length > 0) {
+      res.status(200).json(result[0]);
+      return;
+    }
+
+    throw result;
+  } catch (error) {
+    if ((error as Error).message === "No Element Found") {
+      res.status(404).send(`Tag with name "${tagName}" not found`);
+      return;
+    }
+
+    res.status(500).send(`Error when fetching tag: Error fetching tag`);
+  }
+};
+
+
 // Add appropriate HTTP verbs and their endpoints to the router.
 router.get('/getTagsWithQuestionNumber', getTagsWithQuestionNumber);
+router.get('/getTagByName/:tagName', getTagByName);
 
 export default router;

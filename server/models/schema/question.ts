@@ -33,6 +33,14 @@ const questionSchema: Schema = new Schema(
       type: Number,
       default: 0,
     },
+    up_votes:{
+      type: Array,
+      default:0,
+    },
+    down_votes:{
+      type: Array,
+      default:0
+    }
   },
   { collection: 'Question' },
 );
