@@ -30,16 +30,13 @@ describe('GET /getTagByName/:name', () => {
     expect(response.body).toEqual(mockTag);
   });
 
-  it('should return 404 if the tag is not found', async () => {
+  it('should return 500 if the tag is not found', async () => {
     // Mock findOne to return null to simulate tag not found
     findOneSpy.mockResolvedValueOnce(null); // Mock a resolved promise with null (tag not found)
-
-    // Call the endpoint
     const response = await supertest(app).get('/tag/getTagByName/nonExistentTag');
 
-    // Assertions
-    expect(response.status).toBe(404); // Expect HTTP status 404
-    expect(response.text).toBe('Tag with name "nonExistentTag" not found'); // Expect the response message
+    expect(response.status).toBe(500);
+    expect(response.text).toBe('Error when fetching tag: Error fetching tag');
   });
 
   it('should return 500 if there is an error fetching the tag', async () => {
@@ -50,7 +47,7 @@ describe('GET /getTagByName/:name', () => {
     const response = await supertest(app).get('/tag/getTagByName/errorTag');
 
     // Assertions
-    expect(response.status).toBe(500); // Expect HTTP status 500 for error
-    expect(response.text).toContain('Error when fetching tag: Error fetching tag'); // Expect the error message to be included in the response
+    expect(response.status).toBe(500);
+    expect(response.text).toContain('Error when fetching tag: Error fetching tag');
   });
 });

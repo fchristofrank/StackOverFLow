@@ -105,8 +105,6 @@ export const getMostRecentAnswerTime = (q: Question, mp: Map<string, Date>): voi
   });
 };
 
-
-
 /**
  * Gets active questions from a list, sorted by the most recent answer date in descending order.
  *
@@ -138,11 +136,10 @@ export const sortQuestionsByActive = (qlist: Question[]): Question[] => {
   });
 };
 
-
 export const sortQuestionsByMostViewed = (qlist: Question[]): Question[] => {
   return [...qlist].sort((a, b) => b.views - a.views);
 };
- 
+
 /**
  * Adds a tag to the database if it does not already exist.
  *
@@ -153,24 +150,22 @@ export const addTag = async (tag: Tag): Promise<Tag | null> => {
   try {
     // Check if a tag with the given name already exists
     const existingTag = await TagModel.findOne({ name: tag.name });
-    console.log("current")
-    console.log(existingTag);
 
     if (existingTag) {
       return existingTag as Tag;
-    }
-
-    if (existingTag == null){
-      return new Error("No Element Found")
     }
 
     // If the tag does not exist, create a new one
     const newTag = new TagModel(tag);
     const savedTag = await newTag.save();
 
+    if (existingTag == null) {
+      return new Error('No Element Found');
+    }
+
     return savedTag as Tag;
   } catch (error) {
-    return new Error("Error Occurred");
+    return null;
   }
 };
 
@@ -198,7 +193,7 @@ export const getQuestionsByOrder = async (order: OrderType): Promise<Question[]>
       return sortQuestionsByUnanswered(qlist);
     }
 
-    if (order === 'mostViewed'){
+    if (order === 'mostViewed') {
       return sortQuestionsByMostViewed(qlist);
     }
 
@@ -212,10 +207,17 @@ export const getQuestionsByOrder = async (order: OrderType): Promise<Question[]>
  * Implement the below function to filter questions based on 'asked_by' attribute.
  */
 export const filterQuestionsByAskedBy = (qlist: Question[], asked_by: string): Question[] => {
-  // TODO: Implement function
-  return [];
-};
+ 
+  const result: Question[] = [];
 
+  for (const question of qlist) {
+    if (question.asked_by === asked_by) {
+      result.push(question);
+    }
+  }
+
+  return result;
+};
 /**
  * Filters questions based on a search string containing tags and/or keywords.
  *
@@ -306,10 +308,8 @@ export const saveAnswer = async (a: Answer): Promise<AnswerResponse> => {
  * @returns {Promise<Tag[]>} - The list of tags, or an empty array if an error occurred
  */
 export const getTags = async (tags: Tag[]): Promise<Tag[]> => {
-  
-    /*Remove duplicate tags, ensuring that if the incoming array of tag objects contains
-     objects with the same name, only the first tag object is used and others 
-     are discarded.*/
+  try {
+    // Remove duplicate tags, ensuring that only the first tag object with the same name is used.
     const seenNames = new Set<string>();
     const uniqueTags = tags.filter(tag => {
       if (seenNames.has(tag.name)) {
@@ -319,11 +319,13 @@ export const getTags = async (tags: Tag[]): Promise<Tag[]> => {
       return true;
     });
 
-    const resultTags = await Promise.all(
-      uniqueTags.map(tag => addTag(tag))
-    );
+    // Attempt to add unique tags to the database
+    const resultTags = await Promise.all(uniqueTags.map(tag => addTag(tag).catch(() => null)));
 
     return resultTags.filter((tag): tag is Tag => tag !== null);
+  } catch (error) {
+    return [];
+  }
 };
 
 /**
@@ -339,10 +341,10 @@ export const addUpvoteToQuestion = async (qid: string, username: string) => {
     const result = await QuestionModel.findOneAndUpdate(
       { _id: qid, up_votes: { $ne: username } },
       { $push: { up_votes: username } },
-      { new: true }
+      { new: true },
     );
 
-    if (null != result && `error` in result){
+    if (null != result && `error` in result) {
       throw result;
     }
 
@@ -350,24 +352,22 @@ export const addUpvoteToQuestion = async (qid: string, username: string) => {
       throw new Error('Database error');
     }
 
-
     return {
       msg: 'Question upvoted successfully',
       up_votes: result.up_votes,
       down_votes: result.down_votes,
     };
   } catch (error) {
-    return {"error": "Error when adding upvote to question" }
+    return { error: 'Error when adding upvote to question' };
   }
 };
-
 
 export const addDownvoteToQuestion = async (qid: string, username: string) => {
   try {
     const result = await QuestionModel.findOneAndUpdate(
       { _id: qid, down_votes: { $ne: username } },
       { $push: { down_votes: username } },
-      { new: true }
+      { new: true },
     );
 
     if (!result) {
@@ -381,7 +381,7 @@ export const addDownvoteToQuestion = async (qid: string, username: string) => {
       down_votes: result.down_votes,
     };
   } catch (error) {
-    return {"error": "Error when adding downvote to question" }
+    return { error: 'Error when adding downvote to question' };
   }
 };
 
@@ -444,3 +444,4 @@ export const getTagCountMap = async (): Promise<Map<string, number> | null | { e
     return { error: 'Error when construction tag map' };
   }
 };
+
